@@ -1,37 +1,48 @@
 {
   "data": [
     {
-      "id": "us/B07XJ8C8F5/yoga mat",
-      "type": "keywords_by_asin_query",
+      "id": "us/yoga mat",
+      "type": "keywords_by_asin_result",
       "attributes": {
+        "country": "us",
         "name": "yoga mat",
-        "monthly_search_volume_exact_match": 450000,
-        "monthly_search_volume_broad_match": 980000,
+        "primary_asin": "B07XJ8C8F5",
+        "monthly_search_volume_exact": 450000,
+        "monthly_search_volume_broad": 980000,
+        "monthly_trend": 4.2,
+        "quarterly_trend": 8.1,
+        "dominant_category": "Sports & Outdoors",
         "relevancy_score": 100,
+        "ease_of_ranking_score": 62,
         "organic_rank": 3,
         "sponsored_rank": null,
-        "ranking_asins_count": 246
+        "overall_rank": 3,
+        "organic_product_count": 12000,
+        "sponsored_product_count": 800
       }
     },
     {
-      "id": "us/B07XJ8C8F5/non slip yoga mat",
-      "type": "keywords_by_asin_query",
+      "id": "us/non slip yoga mat",
+      "type": "keywords_by_asin_result",
       "attributes": {
+        "country": "us",
         "name": "non slip yoga mat",
-        "monthly_search_volume_exact_match": 32000,
-        "monthly_search_volume_broad_match": 75000,
+        "primary_asin": "B07XJ8C8F5",
+        "monthly_search_volume_exact": 32000,
+        "monthly_search_volume_broad": 75000,
+        "monthly_trend": 0.9,
+        "quarterly_trend": 1.4,
+        "dominant_category": "Sports & Outdoors",
         "relevancy_score": 88,
+        "ease_of_ranking_score": 70,
         "organic_rank": 7,
         "sponsored_rank": 2,
-        "ranking_asins_count": 312
+        "overall_rank": 4,
+        "organic_product_count": 5300,
+        "sponsored_product_count": 410
       }
     }
   ],
-  "links": {
-    "self": "https://developer.junglescout.com/api/keywords/keywords_by_asin_query?filter[asin]=B07XJ8C8F5",
-    "next": null
-  },
-  "meta": {
-    "total_items": 2
-  }
+  "meta": { "total_items": 2 },
+  "links": { "self": "https://developer.junglescout.com/api/keywords/keywords_by_asin_query?marketplace=us", "next": null }
 }

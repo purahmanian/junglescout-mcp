@@ -1,55 +1,74 @@
 {
-  "data": [
-    {
-      "id": "us/yoga mat/FitLife",
-      "type": "share_of_voice",
-      "attributes": {
-        "brand": "FitLife",
-        "combined_sov": 0.18,
-        "organic_sov": 0.15,
-        "sponsored_sov": 0.03,
-        "combined_products": 12,
-        "organic_products": 10,
-        "sponsored_products": 2,
-        "avg_price": 27.49,
-        "avg_reviews": 1654,
-        "avg_rating": 4.5
-      }
-    },
-    {
-      "id": "us/yoga mat/Gaiam",
-      "type": "share_of_voice",
-      "attributes": {
-        "brand": "Gaiam",
-        "combined_sov": 0.14,
-        "organic_sov": 0.09,
-        "sponsored_sov": 0.05,
-        "combined_products": 8,
-        "organic_products": 5,
-        "sponsored_products": 3,
-        "avg_price": 31.99,
-        "avg_reviews": 8723,
-        "avg_rating": 4.4
-      }
-    },
-    {
-      "id": "us/yoga mat/Manduka",
-      "type": "share_of_voice",
-      "attributes": {
-        "brand": "Manduka",
-        "combined_sov": 0.11,
-        "organic_sov": 0.11,
-        "sponsored_sov": 0.0,
-        "combined_products": 6,
-        "organic_products": 6,
-        "sponsored_products": 0,
-        "avg_price": 88.0,
-        "avg_reviews": 3412,
-        "avg_rating": 4.7
-      }
+  "data": {
+    "id": "us/yoga mat",
+    "type": "share_of_voice",
+    "attributes": {
+      "estimated_30_day_search_volume": 450000,
+      "exact_suggested_bid_median": 1.85,
+      "product_count": 48,
+      "updated_at": "2026-06-01T00:00:00Z",
+      "brands": [
+        {
+          "brand": "Gaiam",
+          "combined_products": 8,
+          "combined_weighted_sov": 0.22,
+          "combined_basic_sov": 0.17,
+          "combined_average_position": 6.1,
+          "combined_average_price": 31.99,
+          "organic_products": 5,
+          "organic_weighted_sov": 0.14,
+          "organic_basic_sov": 0.10,
+          "organic_average_position": 7.2,
+          "organic_average_price": 29.99,
+          "sponsored_products": 3,
+          "sponsored_weighted_sov": 0.08,
+          "sponsored_basic_sov": 0.07,
+          "sponsored_average_position": 3.0,
+          "sponsored_average_price": 33.99
+        },
+        {
+          "brand": "FitLife",
+          "combined_products": 12,
+          "combined_weighted_sov": 0.18,
+          "combined_basic_sov": 0.15,
+          "combined_average_position": 8.4,
+          "combined_average_price": 27.49,
+          "organic_products": 10,
+          "organic_weighted_sov": 0.15,
+          "organic_basic_sov": 0.13,
+          "organic_average_position": 9.1,
+          "organic_average_price": 27.49,
+          "sponsored_products": 2,
+          "sponsored_weighted_sov": 0.03,
+          "sponsored_basic_sov": 0.02,
+          "sponsored_average_position": 4.5,
+          "sponsored_average_price": 27.49
+        },
+        {
+          "brand": "Manduka",
+          "combined_products": 6,
+          "combined_weighted_sov": 0.11,
+          "combined_basic_sov": 0.09,
+          "combined_average_position": 5.0,
+          "combined_average_price": 88.0,
+          "organic_products": 6,
+          "organic_weighted_sov": 0.11,
+          "organic_basic_sov": 0.09,
+          "organic_average_position": 5.0,
+          "organic_average_price": 88.0,
+          "sponsored_products": 0,
+          "sponsored_weighted_sov": 0.0,
+          "sponsored_basic_sov": 0.0,
+          "sponsored_average_position": null,
+          "sponsored_average_price": null
+        }
+      ],
+      "top_asins_model_start_date": "2026-05-01",
+      "top_asins_model_end_date": "2026-05-31",
+      "top_asins": [
+        { "asin": "B07XJ8C8F5", "name": "Premium Non-Slip Yoga Mat", "brand": "FitLife", "clicks": 12000, "conversions": 1800, "conversion_rate": 0.15 }
+      ]
     }
-  ],
-  "meta": {
-    "search_volume": 450000
-  }
+  },
+  "meta": {}
 }

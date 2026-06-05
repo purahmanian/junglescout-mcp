@@ -1,6 +1,6 @@
 // Jungle Scout API client
 
-import { JS_API_BASE, JS_CONTENT_TYPE } from "./constants.js";
+import { JS_API_BASE, JS_CONTENT_TYPE, JS_ACCEPT_TYPE } from "./constants.js";
 
 export interface JsClientConfig {
   apiKey: string;
@@ -61,7 +61,7 @@ export class JsClient {
       Authorization: `${this.keyName}:${this.apiKey}`,
       "X-API-Type": "junglescout",
       "Content-Type": JS_CONTENT_TYPE,
-      Accept: JS_CONTENT_TYPE,
+      Accept: JS_ACCEPT_TYPE,
     };
 
     const fetchOptions: RequestInit = {

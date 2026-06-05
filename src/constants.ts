@@ -2,8 +2,12 @@
 
 export const JS_API_BASE = "https://developer.junglescout.com/api";
 
-// Content type required by the Jungle Scout JSON:API spec
+// Content type sent on POST bodies (JSON:API spec)
 export const JS_CONTENT_TYPE = "application/vnd.api+json";
+
+// Accept header that routes to the versioned Jungle Scout API. This is NOT the
+// same value as Content-Type: sending the wrong Accept returns HTTP 404.
+export const JS_ACCEPT_TYPE = "application/vnd.junglescout.v1+json";
 
 // Supported marketplace slugs
 export const SUPPORTED_MARKETPLACES = [

@@ -143,7 +143,12 @@ The Jungle Scout API uses a custom authorization format:
 Authorization: <KEY_NAME>:<API_KEY>
 X-API-Type: junglescout
 Content-Type: application/vnd.api+json
+Accept: application/vnd.junglescout.v1+json
 ```
+
+The `Accept` header selects the API version and must be the
+`application/vnd.junglescout.v1+json` media type. Sending a different
+`Accept` value causes the API to return HTTP 404.
 
 All marketplace parameters default to `us`. Other supported values include `ca`, `uk`, `de`, `fr`, `it`, `es`, `jp`, `au`, `in`, and more.
 

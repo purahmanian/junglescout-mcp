@@ -44,6 +44,28 @@ function apiError(err: unknown): {
   return { content: [{ type: "text" as const, text: message }], isError: true };
 }
 
+/** A single JSON:API resource object. */
+interface JsResource {
+  id: string;
+  type: string;
+  attributes: Record<string, unknown>;
+}
+
+/** Derive the ASIN from a JSON:API id like "us/B07XJ8C8F5". */
+function asinFromId(id: string): string {
+  const parts = id.split("/");
+  return parts[parts.length - 1] ?? id;
+}
+
+/** Format a Date as YYYY-MM-DD (UTC). */
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+// Cap on how many seed keywords keyword_search_volume will look up per call.
+// Each seed is a separate upstream request, so this bounds latency and tokens.
+const MAX_KEYWORD_SEEDS = 10;
+
 // ---------------------------------------------------------------------------
 // Zod schemas
 // ---------------------------------------------------------------------------
@@ -54,7 +76,9 @@ export const KeywordSearchVolumeSchema = z.object({
     .min(1)
     .max(MAX_KEYWORDS_PER_REQUEST)
     .describe(
-      `List of keywords to look up (1 to ${MAX_KEYWORDS_PER_REQUEST}). Example: ["yoga mat", "resistance bands"]`,
+      `Keywords to look up exact and broad monthly search volume for. ` +
+        `Each keyword is queried individually (up to ${MAX_KEYWORD_SEEDS} per ` +
+        `call are processed). Example: ["yoga mat", "resistance bands"]`,
     ),
   marketplace: z
     .enum(SUPPORTED_MARKETPLACES)
@@ -65,7 +89,10 @@ export const KeywordSearchVolumeSchema = z.object({
 export const KeywordsByAsinSchema = z.object({
   asin: z
     .string()
-    .regex(/^[A-Z0-9]{10}$/, "ASIN must be exactly 10 uppercase alphanumeric characters")
+    .regex(
+      /^[A-Z0-9]{10}$/,
+      "ASIN must be exactly 10 uppercase alphanumeric characters",
+    )
     .describe("Amazon ASIN. Example: B07XJ8C8F5"),
   marketplace: z
     .enum(SUPPORTED_MARKETPLACES)
@@ -75,9 +102,9 @@ export const KeywordsByAsinSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(50)
-    .default(20)
-    .describe("Number of keywords to return (1-50). Defaults to 20."),
+    .max(100)
+    .default(25)
+    .describe("Number of keywords to return (1-100). Defaults to 25."),
 });
 
 export const ProductDatabaseQuerySchema = z.object({
@@ -88,9 +115,7 @@ export const ProductDatabaseQuerySchema = z.object({
   category: z
     .string()
     .optional()
-    .describe(
-      "Amazon category name to filter by. Example: 'Sports & Outdoors'",
-    ),
+    .describe("Amazon category name to filter by. Example: 'Sports & Outdoors'"),
   min_price: z
     .number()
     .min(0)
@@ -111,25 +136,40 @@ export const ProductDatabaseQuerySchema = z.object({
     .int()
     .min(0)
     .optional()
-    .describe("Maximum number of reviews (to find low-competition products). Example: 200"),
+    .describe(
+      "Maximum number of reviews (to find low-competition products). Example: 200",
+    ),
   page_size: z
     .number()
     .int()
     .min(1)
-    .max(50)
-    .default(20)
-    .describe("Number of results to return (1-50). Defaults to 20."),
+    .max(100)
+    .default(25)
+    .describe("Number of results to return (1-100). Defaults to 25."),
 });
 
 export const SalesEstimatesSchema = z.object({
   asin: z
     .string()
-    .regex(/^[A-Z0-9]{10}$/, "ASIN must be exactly 10 uppercase alphanumeric characters")
+    .regex(
+      /^[A-Z0-9]{10}$/,
+      "ASIN must be exactly 10 uppercase alphanumeric characters",
+    )
     .describe("Amazon ASIN. Example: B07XJ8C8F5"),
   marketplace: z
     .enum(SUPPORTED_MARKETPLACES)
     .default(DEFAULT_MARKETPLACE)
     .describe("Amazon marketplace code. Defaults to 'us'."),
+  start_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+    .optional()
+    .describe("Start date YYYY-MM-DD. Defaults to 30 days ago."),
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
+    .optional()
+    .describe("End date YYYY-MM-DD (must be before today). Defaults to yesterday."),
 });
 
 export const ShareOfVoiceSchema = z.object({
@@ -153,54 +193,69 @@ export async function handleKeywordSearchVolume(
 ): Promise<ReturnType<typeof ok>> {
   if (!client) return credsError();
 
+  const seeds = args.keywords.slice(0, MAX_KEYWORD_SEEDS);
+  const truncated = args.keywords.length - seeds.length;
+
   try {
-    // POST /keywords/keywords_by_keyword_query
-    const body = {
-      data: {
-        type: "keywords_by_keyword_query",
-        attributes: {
-          search_terms: args.keywords,
+    const results: Array<Record<string, unknown>> = [];
+
+    for (const seed of seeds) {
+      // POST /keywords/keywords_by_keyword_query
+      // marketplace, sort, and paging are QUERY params; the seed is the body.
+      const resp = await client.request<{ data?: JsResource[] }>({
+        method: "POST",
+        path: "/keywords/keywords_by_keyword_query",
+        params: {
           marketplace: args.marketplace,
-          sort_by: "monthly_search_volume_exact_match",
+          sort: "-monthly_search_volume_exact",
+          "page[size]": 50,
         },
-      },
-    };
+        body: {
+          data: {
+            type: "keywords_by_keyword_query",
+            attributes: { search_terms: seed },
+          },
+        },
+      });
 
-    const result = await client.request<{
-      data: Array<{
-        id: string;
-        type: string;
-        attributes: Record<string, unknown>;
-      }>;
-      meta?: Record<string, unknown>;
-    }>({
-      method: "POST",
-      path: "/keywords/keywords_by_keyword_query",
-      body,
-    });
+      const rows = resp.data ?? [];
+      const match =
+        rows.find(
+          (r) =>
+            String(r.attributes?.["name"] ?? "").toLowerCase() ===
+            seed.toLowerCase(),
+        ) ?? rows[0];
 
-    const rows = (result.data ?? []).map((item) => {
-      const a = item.attributes;
-      return {
-        keyword: a["name"] ?? item.id,
-        exact_match_volume_30d: a["monthly_search_volume_exact_match"] ?? null,
-        broad_match_volume_30d: a["monthly_search_volume_broad_match"] ?? null,
-        yoy_trend: a["monthly_trend"] ?? null,
+      if (!match) {
+        results.push({ keyword: seed, found: false });
+        continue;
+      }
+
+      const a = match.attributes;
+      results.push({
+        keyword: a["name"] ?? seed,
+        exact_search_volume: a["monthly_search_volume_exact"] ?? null,
+        broad_search_volume: a["monthly_search_volume_broad"] ?? null,
+        monthly_trend: a["monthly_trend"] ?? null,
         quarterly_trend: a["quarterly_trend"] ?? null,
-        recommended_promotions: a["recommended_promotions"] ?? null,
-        ppc_bid_broad: a["ppc_bid_broad"] ?? null,
+        dominant_category: a["dominant_category"] ?? null,
         ppc_bid_exact: a["ppc_bid_exact"] ?? null,
+        ppc_bid_broad: a["ppc_bid_broad"] ?? null,
         ease_of_ranking_score: a["ease_of_ranking_score"] ?? null,
         relevancy_score: a["relevancy_score"] ?? null,
-      };
-    });
+        organic_product_count: a["organic_product_count"] ?? null,
+      });
+    }
 
-    const summary = {
-      requested_keywords: args.keywords,
+    const summary: Record<string, unknown> = {
+      requested_keywords: seeds,
       marketplace: args.marketplace,
-      results_count: rows.length,
-      results: rows,
+      results_count: results.length,
+      results,
     };
+    if (truncated > 0) {
+      summary["note"] = `Only the first ${MAX_KEYWORD_SEEDS} keywords were processed; ${truncated} were skipped.`;
+    }
 
     return ok(formatJson(summary));
   } catch (err) {
@@ -215,21 +270,20 @@ export async function handleKeywordsByAsin(
   if (!client) return credsError();
 
   try {
-    const result = await client.request<{
-      data: Array<{
-        id: string;
-        type: string;
-        attributes: Record<string, unknown>;
-      }>;
-      meta?: Record<string, unknown>;
-      links?: Record<string, unknown>;
-    }>({
-      method: "GET",
+    // POST /keywords/keywords_by_asin_query with the ASIN in the body.
+    const result = await client.request<{ data?: JsResource[] }>({
+      method: "POST",
       path: "/keywords/keywords_by_asin_query",
       params: {
-        "filter[asin]": args.asin,
-        "filter[marketplace]": args.marketplace,
+        marketplace: args.marketplace,
+        sort: "-monthly_search_volume_exact",
         "page[size]": args.page_size,
+      },
+      body: {
+        data: {
+          type: "keywords_by_asin_query",
+          attributes: { asins: [args.asin] },
+        },
       },
     });
 
@@ -237,12 +291,13 @@ export async function handleKeywordsByAsin(
       const a = item.attributes;
       return {
         keyword: a["name"] ?? item.id,
-        exact_match_volume_30d: a["monthly_search_volume_exact_match"] ?? null,
-        broad_match_volume_30d: a["monthly_search_volume_broad_match"] ?? null,
+        exact_search_volume: a["monthly_search_volume_exact"] ?? null,
+        broad_search_volume: a["monthly_search_volume_broad"] ?? null,
         relevancy_score: a["relevancy_score"] ?? null,
         organic_rank: a["organic_rank"] ?? null,
         sponsored_rank: a["sponsored_rank"] ?? null,
-        ranking_asins_count: a["ranking_asins_count"] ?? null,
+        overall_rank: a["overall_rank"] ?? null,
+        ease_of_ranking_score: a["ease_of_ranking_score"] ?? null,
       };
     });
 
@@ -266,66 +321,43 @@ export async function handleProductDatabaseQuery(
   if (!client) return credsError();
 
   try {
-    // Build filter attributes conditionally
-    const filterAttributes: Record<string, unknown> = {
-      marketplace: args.marketplace,
-    };
+    const attributes: Record<string, unknown> = {};
+    if (args.category !== undefined) attributes["categories"] = [args.category];
+    if (args.min_price !== undefined) attributes["min_price"] = args.min_price;
+    if (args.max_price !== undefined) attributes["max_price"] = args.max_price;
+    if (args.min_monthly_revenue !== undefined)
+      attributes["min_revenue"] = args.min_monthly_revenue;
+    if (args.max_reviews !== undefined)
+      attributes["max_reviews"] = args.max_reviews;
 
-    if (args.category !== undefined) {
-      filterAttributes["category"] = args.category;
-    }
-    if (args.min_price !== undefined) {
-      filterAttributes["price_gte"] = args.min_price;
-    }
-    if (args.max_price !== undefined) {
-      filterAttributes["price_lte"] = args.max_price;
-    }
-    if (args.min_monthly_revenue !== undefined) {
-      filterAttributes["monthly_revenue_gte"] = args.min_monthly_revenue;
-    }
-    if (args.max_reviews !== undefined) {
-      filterAttributes["reviews_lte"] = args.max_reviews;
-    }
-
-    const body = {
-      data: {
-        type: "product_database_query",
-        attributes: {
-          ...filterAttributes,
-          page_size: args.page_size,
-          sort_by: "monthly_revenue",
-          sort_order: "desc",
-        },
-      },
-    };
-
-    const result = await client.request<{
-      data: Array<{
-        id: string;
-        type: string;
-        attributes: Record<string, unknown>;
-      }>;
-      meta?: Record<string, unknown>;
-    }>({
+    const result = await client.request<{ data?: JsResource[] }>({
       method: "POST",
       path: "/product_database_query",
-      body,
+      params: {
+        marketplace: args.marketplace,
+        sort: "-revenue",
+        "page[size]": args.page_size,
+      },
+      body: {
+        data: { type: "product_database_query", attributes },
+      },
     });
 
     const products = (result.data ?? []).map((item) => {
       const a = item.attributes;
       return {
-        asin: a["asin"] ?? item.id,
+        asin: asinFromId(item.id),
         title: a["title"] ?? null,
         brand: a["brand"] ?? null,
         category: a["category"] ?? null,
         price: a["price"] ?? null,
-        monthly_revenue: a["monthly_revenue"] ?? null,
-        monthly_units_sold: a["monthly_units_sold"] ?? null,
+        monthly_revenue: a["approximate_30_day_revenue"] ?? null,
+        monthly_units_sold: a["approximate_30_day_units_sold"] ?? null,
         reviews_count: a["reviews"] ?? null,
         avg_rating: a["rating"] ?? null,
-        bsr: a["bsr"] ?? null,
+        product_rank: a["product_rank"] ?? null,
         seller_type: a["seller_type"] ?? null,
+        number_of_sellers: a["number_of_sellers"] ?? null,
         listing_quality_score: a["listing_quality_score"] ?? null,
       };
     });
@@ -357,21 +389,23 @@ export async function handleSalesEstimates(
 ): Promise<ReturnType<typeof ok>> {
   if (!client) return credsError();
 
+  // Default to the last 30 days ending yesterday (end_date must be before today).
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const thirtyBefore = new Date(yesterday.getTime() - 29 * 24 * 60 * 60 * 1000);
+  const startDate = args.start_date ?? ymd(thirtyBefore);
+  const endDate = args.end_date ?? ymd(yesterday);
+
   try {
-    const result = await client.request<{
-      data: Array<{
-        id: string;
-        type: string;
-        attributes: Record<string, unknown>;
-      }>;
-      meta?: Record<string, unknown>;
-    }>({
+    // GET /sales_estimates_query with everything in the query string.
+    const result = await client.request<{ data?: JsResource[] }>({
       method: "GET",
       path: "/sales_estimates_query",
       params: {
-        "filter[asin]": args.asin,
-        "filter[marketplace]": args.marketplace,
-        "filter[date]": new Date().toISOString().slice(0, 7), // YYYY-MM
+        marketplace: args.marketplace,
+        asin: args.asin,
+        start_date: startDate,
+        end_date: endDate,
       },
     });
 
@@ -381,27 +415,42 @@ export async function handleSalesEstimates(
         formatJson({
           asin: args.asin,
           marketplace: args.marketplace,
-          message: "No sales estimate data found for this ASIN.",
+          date_range: { start: startDate, end: endDate },
+          message: "No sales estimate data found for this ASIN and date range.",
         }),
       );
     }
 
     const a = item.attributes;
+    const daily = Array.isArray(a["data"])
+      ? (a["data"] as Array<Record<string, unknown>>)
+      : [];
+
+    let totalUnits = 0;
+    let totalRevenue = 0;
+    let daysWithData = 0;
+    for (const day of daily) {
+      const units = Number(day["estimated_units_sold"] ?? 0);
+      const price = Number(day["last_known_price"] ?? 0);
+      if (Number.isFinite(units) && units > 0) {
+        totalUnits += units;
+        if (Number.isFinite(price)) totalRevenue += units * price;
+        daysWithData += 1;
+      }
+    }
+
     const summary = {
       asin: args.asin,
       marketplace: args.marketplace,
+      date_range: { start: startDate, end: endDate },
+      is_parent: a["is_parent"] ?? null,
+      is_variant: a["is_variant"] ?? null,
       estimates: {
-        monthly_units_sold: a["monthly_units_sold"] ?? null,
-        monthly_revenue: a["monthly_revenue"] ?? null,
-        avg_daily_units: a["avg_daily_units"] ?? null,
-        bsr: a["bsr"] ?? null,
-        bsr_category: a["bsr_category"] ?? null,
-        price: a["price"] ?? null,
-        reviews: a["reviews"] ?? null,
-        rating: a["rating"] ?? null,
-        title: a["title"] ?? null,
-        brand: a["brand"] ?? null,
+        estimated_units_sold_total: totalUnits,
+        estimated_revenue_total: Math.round(totalRevenue * 100) / 100,
+        days_with_data: daysWithData,
       },
+      daily,
     };
 
     return ok(formatJson(summary));
@@ -417,51 +466,44 @@ export async function handleShareOfVoice(
   if (!client) return credsError();
 
   try {
-    const result = await client.request<{
-      data: Array<{
-        id: string;
-        type: string;
-        attributes: Record<string, unknown>;
-      }>;
-      meta?: Record<string, unknown>;
-    }>({
+    // GET /share_of_voice. Note: `data` is a single object, not an array.
+    const result = await client.request<{ data?: JsResource }>({
       method: "GET",
       path: "/share_of_voice",
       params: {
-        "filter[keyword]": args.keyword,
-        "filter[marketplace]": args.marketplace,
+        marketplace: args.marketplace,
+        keyword: args.keyword,
       },
     });
 
-    const brands = (result.data ?? []).map((item) => {
-      const a = item.attributes;
-      return {
-        brand: a["brand"] ?? item.id,
-        combined_sov: a["combined_sov"] ?? null,
-        organic_sov: a["organic_sov"] ?? null,
-        sponsored_sov: a["sponsored_sov"] ?? null,
-        combined_products: a["combined_products"] ?? null,
-        organic_products: a["organic_products"] ?? null,
-        sponsored_products: a["sponsored_products"] ?? null,
-        avg_price: a["avg_price"] ?? null,
-        avg_reviews: a["avg_reviews"] ?? null,
-        avg_rating: a["avg_rating"] ?? null,
-      };
-    });
+    const attrs = result.data?.attributes ?? {};
+    const brandList = Array.isArray(attrs["brands"])
+      ? (attrs["brands"] as Array<Record<string, unknown>>)
+      : [];
 
-    // Sort by combined SOV descending for clarity
-    brands.sort((a, b) => {
-      const sovA = typeof a.combined_sov === "number" ? a.combined_sov : 0;
-      const sovB = typeof b.combined_sov === "number" ? b.combined_sov : 0;
-      return sovB - sovA;
-    });
+    const brands = brandList.map((b) => ({
+      brand: b["brand"] ?? null,
+      combined_weighted_sov: b["combined_weighted_sov"] ?? null,
+      combined_basic_sov: b["combined_basic_sov"] ?? null,
+      organic_weighted_sov: b["organic_weighted_sov"] ?? null,
+      sponsored_weighted_sov: b["sponsored_weighted_sov"] ?? null,
+      combined_products: b["combined_products"] ?? null,
+      organic_products: b["organic_products"] ?? null,
+      sponsored_products: b["sponsored_products"] ?? null,
+      combined_average_price: b["combined_average_price"] ?? null,
+    }));
 
-    const meta = result.meta ?? {};
+    brands.sort((x, y) => {
+      const sx = typeof x.combined_weighted_sov === "number" ? x.combined_weighted_sov : 0;
+      const sy = typeof y.combined_weighted_sov === "number" ? y.combined_weighted_sov : 0;
+      return sy - sx;
+    });
 
     const summary = {
       keyword: args.keyword,
       marketplace: args.marketplace,
-      search_volume: (meta as Record<string, unknown>)["search_volume"] ?? null,
+      search_volume: attrs["estimated_30_day_search_volume"] ?? null,
+      product_count: attrs["product_count"] ?? null,
       brands_count: brands.length,
       brands,
     };

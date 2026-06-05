@@ -1,5 +1,7 @@
 // Tests for junglescout-mcp tool handlers
 // All upstream HTTP is mocked; no live network calls are made.
+// Fixtures mirror the real Jungle Scout API response shapes
+// (verified against developer.junglescout.com OpenAPI spec).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { JsClient } from "../src/client.js";
@@ -69,24 +71,23 @@ describe("missing credentials", () => {
     const text = extractText(result);
     expect(text).toContain(MISSING_CREDS_MESSAGE);
     expect(text).toContain("JUNGLESCOUT_API_KEY");
+    expect((result as { isError?: boolean }).isError).toBe(true);
   });
 
   it("keywords_by_asin returns instructions when client is null", async () => {
     const result = await handleKeywordsByAsin(
-      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 20 },
+      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 25 },
       null,
     );
-    const text = extractText(result);
-    expect(text).toContain(MISSING_CREDS_MESSAGE);
+    expect(extractText(result)).toContain(MISSING_CREDS_MESSAGE);
   });
 
   it("product_database_query returns instructions when client is null", async () => {
     const result = await handleProductDatabaseQuery(
-      { marketplace: "us", page_size: 20 },
+      { marketplace: "us", page_size: 25 },
       null,
     );
-    const text = extractText(result);
-    expect(text).toContain(MISSING_CREDS_MESSAGE);
+    expect(extractText(result)).toContain(MISSING_CREDS_MESSAGE);
   });
 
   it("sales_estimates returns instructions when client is null", async () => {
@@ -94,8 +95,7 @@ describe("missing credentials", () => {
       { asin: "B07XJ8C8F5", marketplace: "us" },
       null,
     );
-    const text = extractText(result);
-    expect(text).toContain(MISSING_CREDS_MESSAGE);
+    expect(extractText(result)).toContain(MISSING_CREDS_MESSAGE);
   });
 
   it("share_of_voice returns instructions when client is null", async () => {
@@ -103,8 +103,7 @@ describe("missing credentials", () => {
       { keyword: "yoga mat", marketplace: "us" },
       null,
     );
-    const text = extractText(result);
-    expect(text).toContain(MISSING_CREDS_MESSAGE);
+    expect(extractText(result)).toContain(MISSING_CREDS_MESSAGE);
   });
 });
 
@@ -122,16 +121,16 @@ describe("keyword_search_volume", () => {
       client,
     );
 
-    const text = extractText(result);
-    const data = JSON.parse(text);
+    const data = JSON.parse(extractText(result));
 
     expect(data.marketplace).toBe("us");
     expect(data.results_count).toBe(2);
     expect(data.results[0].keyword).toBe("yoga mat");
-    expect(data.results[0].exact_match_volume_30d).toBe(450000);
+    expect(data.results[0].exact_search_volume).toBe(450000);
+    expect(data.results[0].broad_search_volume).toBe(980000);
     expect(data.results[0].ease_of_ranking_score).toBe(62);
     expect(data.results[1].keyword).toBe("yoga block");
-    expect(data.results[1].exact_match_volume_30d).toBe(85000);
+    expect(data.results[1].exact_search_volume).toBe(85000);
   });
 
   it("includes ppc bid data", async () => {
@@ -148,6 +147,25 @@ describe("keyword_search_volume", () => {
     expect(data.results[0].ppc_bid_broad).toBe(1.24);
   });
 
+  it("issues a POST with the seed in the body and marketplace in the query", async () => {
+    mockFetch(keywordSearchVolumeFixture);
+    const client = makeClient();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await handleKeywordSearchVolume(
+      { keywords: ["yoga mat"], marketplace: "us" },
+      client,
+    );
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toContain("keywords_by_keyword_query");
+    expect(String(url)).toContain("marketplace=us");
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(String(init.body));
+    expect(body.data.type).toBe("keywords_by_keyword_query");
+    expect(body.data.attributes.search_terms).toBe("yoga mat");
+  });
+
   it("returns error text on API failure", async () => {
     mockFetch({ errors: [{ detail: "Unauthorized" }] }, 401);
     const client = makeClient();
@@ -157,8 +175,7 @@ describe("keyword_search_volume", () => {
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("Authentication failed");
+    expect(extractText(result)).toContain("Authentication failed");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 
@@ -171,8 +188,7 @@ describe("keyword_search_volume", () => {
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("Rate limit");
+    expect(extractText(result)).toContain("Rate limit");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 });
@@ -187,7 +203,7 @@ describe("keywords_by_asin", () => {
     const client = makeClient();
 
     const result = await handleKeywordsByAsin(
-      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 20 },
+      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 25 },
       client,
     );
 
@@ -197,12 +213,13 @@ describe("keywords_by_asin", () => {
     expect(data.marketplace).toBe("us");
     expect(data.results_count).toBe(2);
     expect(data.keywords[0].keyword).toBe("yoga mat");
+    expect(data.keywords[0].exact_search_volume).toBe(450000);
     expect(data.keywords[0].organic_rank).toBe(3);
     expect(data.keywords[1].keyword).toBe("non slip yoga mat");
     expect(data.keywords[1].sponsored_rank).toBe(2);
   });
 
-  it("passes the correct ASIN in request params", async () => {
+  it("sends a POST with the ASIN in the request body", async () => {
     mockFetch(keywordsByAsinFixture);
     const client = makeClient();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
@@ -212,9 +229,13 @@ describe("keywords_by_asin", () => {
       client,
     );
 
-    const callUrl = String((fetchSpy.mock.calls[0] as [string])[0]);
-    expect(callUrl).toContain("B07XJ8C8F5");
-    expect(callUrl).toContain("keywords_by_asin_query");
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toContain("keywords_by_asin_query");
+    expect(String(url)).toContain("page%5Bsize%5D=10");
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(String(init.body));
+    expect(body.data.type).toBe("keywords_by_asin_query");
+    expect(body.data.attributes.asins).toEqual(["B07XJ8C8F5"]);
   });
 
   it("returns error text on API failure", async () => {
@@ -222,12 +243,11 @@ describe("keywords_by_asin", () => {
     const client = makeClient();
 
     const result = await handleKeywordsByAsin(
-      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 20 },
+      { asin: "B07XJ8C8F5", marketplace: "us", page_size: 25 },
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("Invalid request parameters");
+    expect(extractText(result)).toContain("Invalid request parameters");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 });
@@ -249,7 +269,7 @@ describe("product_database_query", () => {
         max_price: 50,
         min_monthly_revenue: 5000,
         max_reviews: 2000,
-        page_size: 20,
+        page_size: 25,
       },
       client,
     );
@@ -262,7 +282,37 @@ describe("product_database_query", () => {
     expect(data.results_count).toBe(2);
     expect(data.products[0].asin).toBe("B07XJ8C8F5");
     expect(data.products[0].monthly_revenue).toBe(87500);
+    expect(data.products[0].monthly_units_sold).toBe(3017);
     expect(data.products[0].seller_type).toBe("FBA");
+  });
+
+  it("maps filter args into the request body attributes", async () => {
+    mockFetch(productDatabaseFixture);
+    const client = makeClient();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await handleProductDatabaseQuery(
+      {
+        marketplace: "us",
+        category: "Sports & Outdoors",
+        min_price: 15,
+        max_price: 50,
+        min_monthly_revenue: 5000,
+        max_reviews: 2000,
+        page_size: 25,
+      },
+      client,
+    );
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(String(url)).toContain("product_database_query");
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(String(init.body));
+    expect(body.data.attributes.categories).toEqual(["Sports & Outdoors"]);
+    expect(body.data.attributes.min_price).toBe(15);
+    expect(body.data.attributes.max_price).toBe(50);
+    expect(body.data.attributes.min_revenue).toBe(5000);
+    expect(body.data.attributes.max_reviews).toBe(2000);
   });
 
   it("works without optional filters", async () => {
@@ -270,7 +320,7 @@ describe("product_database_query", () => {
     const client = makeClient();
 
     const result = await handleProductDatabaseQuery(
-      { marketplace: "us", page_size: 20 },
+      { marketplace: "us", page_size: 25 },
       client,
     );
 
@@ -285,12 +335,11 @@ describe("product_database_query", () => {
     const client = makeClient();
 
     const result = await handleProductDatabaseQuery(
-      { marketplace: "us", page_size: 20 },
+      { marketplace: "us", page_size: 25 },
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("500");
+    expect(extractText(result)).toContain("500");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 });
@@ -300,7 +349,7 @@ describe("product_database_query", () => {
 // ---------------------------------------------------------------------------
 
 describe("sales_estimates", () => {
-  it("returns monthly sales estimate for an ASIN", async () => {
+  it("aggregates the daily sales estimate series", async () => {
     mockFetch(salesEstimatesFixture);
     const client = makeClient();
 
@@ -313,10 +362,34 @@ describe("sales_estimates", () => {
 
     expect(data.asin).toBe("B07XJ8C8F5");
     expect(data.marketplace).toBe("us");
-    expect(data.estimates.monthly_units_sold).toBe(3017);
-    expect(data.estimates.monthly_revenue).toBeCloseTo(87463.83, 1);
-    expect(data.estimates.bsr_category).toBe("Sports & Outdoors");
-    expect(data.estimates.brand).toBe("FitLife");
+    expect(data.estimates.estimated_units_sold_total).toBe(300);
+    // 100*28.99 + 110*28.99 + 90*27.99 = 8607.0
+    expect(data.estimates.estimated_revenue_total).toBeCloseTo(8607.0, 1);
+    expect(data.estimates.days_with_data).toBe(3);
+    expect(data.daily).toHaveLength(3);
+  });
+
+  it("sends a GET with date range and asin in the query string", async () => {
+    mockFetch(salesEstimatesFixture);
+    const client = makeClient();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await handleSalesEstimates(
+      {
+        asin: "B07XJ8C8F5",
+        marketplace: "us",
+        start_date: "2024-01-01",
+        end_date: "2024-01-31",
+      },
+      client,
+    );
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(init.method ?? "GET").toBe("GET");
+    expect(String(url)).toContain("sales_estimates_query");
+    expect(String(url)).toContain("asin=B07XJ8C8F5");
+    expect(String(url)).toContain("start_date=2024-01-01");
+    expect(String(url)).toContain("end_date=2024-01-31");
   });
 
   it("handles empty data gracefully", async () => {
@@ -341,8 +414,7 @@ describe("sales_estimates", () => {
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("404");
+    expect(extractText(result)).toContain("404");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 });
@@ -352,7 +424,7 @@ describe("sales_estimates", () => {
 // ---------------------------------------------------------------------------
 
 describe("share_of_voice", () => {
-  it("returns brand share data sorted by combined SOV", async () => {
+  it("returns brand share data sorted by combined weighted SOV", async () => {
     mockFetch(shareOfVoiceFixture);
     const client = makeClient();
 
@@ -366,12 +438,13 @@ describe("share_of_voice", () => {
     expect(data.keyword).toBe("yoga mat");
     expect(data.marketplace).toBe("us");
     expect(data.search_volume).toBe(450000);
+    expect(data.product_count).toBe(48);
     expect(data.brands_count).toBe(3);
 
-    // Should be sorted by combined_sov descending
-    expect(data.brands[0].brand).toBe("FitLife");
-    expect(data.brands[0].combined_sov).toBe(0.18);
-    expect(data.brands[1].brand).toBe("Gaiam");
+    // Sorted by combined_weighted_sov descending: Gaiam 0.22, FitLife 0.18, Manduka 0.11
+    expect(data.brands[0].brand).toBe("Gaiam");
+    expect(data.brands[0].combined_weighted_sov).toBe(0.22);
+    expect(data.brands[1].brand).toBe("FitLife");
     expect(data.brands[2].brand).toBe("Manduka");
   });
 
@@ -385,9 +458,24 @@ describe("share_of_voice", () => {
     );
 
     const data = JSON.parse(extractText(result));
-    const fitlife = data.brands[0];
-    expect(fitlife.organic_sov).toBe(0.15);
-    expect(fitlife.sponsored_sov).toBe(0.03);
+    const fitlife = data.brands.find(
+      (b: { brand: string }) => b.brand === "FitLife",
+    );
+    expect(fitlife.organic_weighted_sov).toBe(0.15);
+    expect(fitlife.sponsored_weighted_sov).toBe(0.03);
+  });
+
+  it("sends a GET with keyword in the query string", async () => {
+    mockFetch(shareOfVoiceFixture);
+    const client = makeClient();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await handleShareOfVoice({ keyword: "yoga mat", marketplace: "us" }, client);
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(init.method ?? "GET").toBe("GET");
+    expect(String(url)).toContain("share_of_voice");
+    expect(String(url)).toContain("keyword=yoga+mat");
   });
 
   it("returns error text on API failure", async () => {
@@ -399,18 +487,17 @@ describe("share_of_voice", () => {
       client,
     );
 
-    const text = extractText(result);
-    expect(text).toContain("Authentication failed");
+    expect(extractText(result)).toContain("Authentication failed");
     expect((result as { isError?: boolean }).isError).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// JsClient: auth header format
+// JsClient: auth + headers
 // ---------------------------------------------------------------------------
 
-describe("JsClient auth header", () => {
-  it("sends Authorization header as KEY_NAME:API_KEY format", async () => {
+describe("JsClient headers", () => {
+  it("sends Authorization, X-API-Type, Content-Type, and the versioned Accept", async () => {
     mockFetch(keywordSearchVolumeFixture);
     const client = new JsClient({
       apiKey: "my-secret-key",
@@ -429,5 +516,6 @@ describe("JsClient auth header", () => {
     expect(headers["Authorization"]).toBe("my-key-name:my-secret-key");
     expect(headers["X-API-Type"]).toBe("junglescout");
     expect(headers["Content-Type"]).toBe("application/vnd.api+json");
+    expect(headers["Accept"]).toBe("application/vnd.junglescout.v1+json");
   });
 });
