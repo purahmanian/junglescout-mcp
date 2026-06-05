@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.purahmanian/junglescout-mcp",
+  "description": "MCP server for the Jungle Scout Cobalt/Developer API: keyword volumes, ASIN keywords, product database, sales estimates, and share of voice",
+  "repository": {
+    "url": "https://github.com/purahmanian/junglescout-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "junglescout-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "JUNGLESCOUT_API_KEY",
+          "description": "Jungle Scout API key from the Developer/Cobalt API settings",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "JUNGLESCOUT_KEY_NAME",
+          "description": "Jungle Scout API key name (used in the Authorization header as KEY_NAME:API_KEY)",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
