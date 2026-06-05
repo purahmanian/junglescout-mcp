@@ -116,6 +116,12 @@ export const ProductDatabaseQuerySchema = z.object({
     .string()
     .optional()
     .describe("Amazon category name to filter by. Example: 'Sports & Outdoors'"),
+  include_keywords: z
+    .array(z.string().min(1))
+    .optional()
+    .describe(
+      "Only include products whose title matches these keywords (or ASINs). Example: ['tonneau cover']",
+    ),
   min_price: z
     .number()
     .min(0)
@@ -323,6 +329,8 @@ export async function handleProductDatabaseQuery(
   try {
     const attributes: Record<string, unknown> = {};
     if (args.category !== undefined) attributes["categories"] = [args.category];
+    if (args.include_keywords !== undefined)
+      attributes["include_keywords"] = args.include_keywords;
     if (args.min_price !== undefined) attributes["min_price"] = args.min_price;
     if (args.max_price !== undefined) attributes["max_price"] = args.max_price;
     if (args.min_monthly_revenue !== undefined)

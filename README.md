@@ -18,7 +18,7 @@ MCP server for the Jungle Scout Cobalt/Developer API: keyword search volume, ASI
 |---|---|---|
 | `keyword_search_volume` | Exact-match and broad-match volume for up to 100 keywords, plus 30-day trend, quarterly trend, and PPC bid estimates | "What is the search volume for 'yoga mat' and 'foam roller' on Amazon?" |
 | `keywords_by_asin` | Which keywords drive traffic to a specific Amazon listing | "What keywords is ASIN B07XJ8C8F5 ranking for?" |
-| `product_database_query` | Find product opportunities filtered by category, price, minimum revenue, and max reviews | "Find Sports and Outdoors products under $40 with at least $5k monthly revenue and fewer than 300 reviews" |
+| `product_database_query` | Find product opportunities filtered by category, title keywords, price, minimum revenue, and max reviews | "Find Sports and Outdoors products under $40 with at least $5k monthly revenue and fewer than 300 reviews" |
 | `sales_estimates` | Estimated monthly units sold and revenue for an ASIN | "How many units per month does B07XJ8C8F5 sell?" |
 | `share_of_voice` | Brand share of organic and sponsored results for a keyword | "Which brands dominate the 'protein powder' keyword on Amazon?" |
 
