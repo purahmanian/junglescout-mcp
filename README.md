@@ -157,7 +157,13 @@ All marketplace parameters default to `us`. Other supported values include `ca`,
 ## Built by
 
 Built by **Puya Ventures LLC**. I build custom MCP servers and AI integrations for
-product, e-commerce, and data teams. Get in touch: purahmanian@gmail.com
+product, e-commerce, and data teams. Get in touch: purahmanian@gmail.com |
+Portfolio: [puyarahmanian.com](https://puyarahmanian.com)
+
+Part of the **Product-Research MCP Suite**:
+[keepa-mcp](https://github.com/purahmanian/keepa-mcp) ·
+[google-trends-mcp](https://github.com/purahmanian/google-trends-mcp) ·
+[junglescout-mcp](https://github.com/purahmanian/junglescout-mcp)
 
 ---
 
