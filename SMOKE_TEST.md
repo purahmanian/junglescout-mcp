@@ -43,7 +43,7 @@ npx @modelcontextprotocol/inspector --cli node dist/index.js \
 # 3. product_database_query (find opportunities)
 npx @modelcontextprotocol/inspector --cli node dist/index.js \
   --method tools/call --tool-name product_database_query \
-  --tool-arg category="Toys & Games" --tool-arg min_revenue=10000
+  --tool-arg category="Toys & Games" --tool-arg min_monthly_revenue=10000
 
 # 4. sales_estimates
 npx @modelcontextprotocol/inspector --cli node dist/index.js \
