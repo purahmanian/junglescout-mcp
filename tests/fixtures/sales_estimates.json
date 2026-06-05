@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": "us/B07XJ8C8F5/2026-06",
+      "type": "sales_estimates_query",
+      "attributes": {
+        "monthly_units_sold": 3017,
+        "monthly_revenue": 87463.83,
+        "avg_daily_units": 97.3,
+        "bsr": 312,
+        "bsr_category": "Sports & Outdoors",
+        "price": 28.99,
+        "reviews": 1842,
+        "rating": 4.5,
+        "title": "Premium Non-Slip Yoga Mat with Carry Strap",
+        "brand": "FitLife"
+      }
+    }
+  ],
+  "meta": {}
+}

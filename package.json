@@ -1,0 +1,42 @@
+{
+  "name": "junglescout-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Jungle Scout Cobalt/Developer API: keyword volumes, ASIN keywords, product database, sales estimates, and share of voice",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "junglescout-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "jungle-scout",
+    "amazon",
+    "keyword-research",
+    "product-research",
+    "sales-estimates",
+    "share-of-voice"
+  ],
+  "author": "Puya Rahmanian <purahmanian@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

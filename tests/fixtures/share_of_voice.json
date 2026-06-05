@@ -1,0 +1,55 @@
+{
+  "data": [
+    {
+      "id": "us/yoga mat/FitLife",
+      "type": "share_of_voice",
+      "attributes": {
+        "brand": "FitLife",
+        "combined_sov": 0.18,
+        "organic_sov": 0.15,
+        "sponsored_sov": 0.03,
+        "combined_products": 12,
+        "organic_products": 10,
+        "sponsored_products": 2,
+        "avg_price": 27.49,
+        "avg_reviews": 1654,
+        "avg_rating": 4.5
+      }
+    },
+    {
+      "id": "us/yoga mat/Gaiam",
+      "type": "share_of_voice",
+      "attributes": {
+        "brand": "Gaiam",
+        "combined_sov": 0.14,
+        "organic_sov": 0.09,
+        "sponsored_sov": 0.05,
+        "combined_products": 8,
+        "organic_products": 5,
+        "sponsored_products": 3,
+        "avg_price": 31.99,
+        "avg_reviews": 8723,
+        "avg_rating": 4.4
+      }
+    },
+    {
+      "id": "us/yoga mat/Manduka",
+      "type": "share_of_voice",
+      "attributes": {
+        "brand": "Manduka",
+        "combined_sov": 0.11,
+        "organic_sov": 0.11,
+        "sponsored_sov": 0.0,
+        "combined_products": 6,
+        "organic_products": 6,
+        "sponsored_products": 0,
+        "avg_price": 88.0,
+        "avg_reviews": 3412,
+        "avg_rating": 4.7
+      }
+    }
+  ],
+  "meta": {
+    "search_volume": 450000
+  }
+}

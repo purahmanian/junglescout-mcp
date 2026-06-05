@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "us/yoga mat",
+      "type": "keywords_by_keyword_query",
+      "attributes": {
+        "name": "yoga mat",
+        "monthly_search_volume_exact_match": 450000,
+        "monthly_search_volume_broad_match": 980000,
+        "monthly_trend": 0.05,
+        "quarterly_trend": 0.12,
+        "recommended_promotions": 8,
+        "ppc_bid_broad": 1.24,
+        "ppc_bid_exact": 1.87,
+        "ease_of_ranking_score": 62,
+        "relevancy_score": 100
+      }
+    },
+    {
+      "id": "us/yoga block",
+      "type": "keywords_by_keyword_query",
+      "attributes": {
+        "name": "yoga block",
+        "monthly_search_volume_exact_match": 85000,
+        "monthly_search_volume_broad_match": 210000,
+        "monthly_trend": 0.02,
+        "quarterly_trend": 0.07,
+        "recommended_promotions": 4,
+        "ppc_bid_broad": 0.88,
+        "ppc_bid_exact": 1.12,
+        "ease_of_ranking_score": 48,
+        "relevancy_score": 82
+      }
+    }
+  ],
+  "meta": {
+    "total_count": 2
+  }
+}

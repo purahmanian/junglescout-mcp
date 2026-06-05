@@ -1,0 +1,43 @@
+{
+  "data": [
+    {
+      "id": "us/B07XJ8C8F5",
+      "type": "product_database_query",
+      "attributes": {
+        "asin": "B07XJ8C8F5",
+        "title": "Premium Non-Slip Yoga Mat with Carry Strap",
+        "brand": "FitLife",
+        "category": "Sports & Outdoors",
+        "price": 28.99,
+        "monthly_revenue": 87500,
+        "monthly_units_sold": 3017,
+        "reviews": 1842,
+        "rating": 4.5,
+        "bsr": 312,
+        "seller_type": "FBA",
+        "listing_quality_score": 8.2
+      }
+    },
+    {
+      "id": "us/B08ABCDE12",
+      "type": "product_database_query",
+      "attributes": {
+        "asin": "B08ABCDE12",
+        "title": "Eco Friendly Yoga Mat Thick 6mm",
+        "brand": "ZenFlow",
+        "category": "Sports & Outdoors",
+        "price": 24.99,
+        "monthly_revenue": 52000,
+        "monthly_units_sold": 2081,
+        "reviews": 765,
+        "rating": 4.3,
+        "bsr": 589,
+        "seller_type": "FBA",
+        "listing_quality_score": 7.1
+      }
+    }
+  ],
+  "meta": {
+    "total_count": 2
+  }
+}

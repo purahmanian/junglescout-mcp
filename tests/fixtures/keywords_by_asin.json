@@ -1,0 +1,37 @@
+{
+  "data": [
+    {
+      "id": "us/B07XJ8C8F5/yoga mat",
+      "type": "keywords_by_asin_query",
+      "attributes": {
+        "name": "yoga mat",
+        "monthly_search_volume_exact_match": 450000,
+        "monthly_search_volume_broad_match": 980000,
+        "relevancy_score": 100,
+        "organic_rank": 3,
+        "sponsored_rank": null,
+        "ranking_asins_count": 246
+      }
+    },
+    {
+      "id": "us/B07XJ8C8F5/non slip yoga mat",
+      "type": "keywords_by_asin_query",
+      "attributes": {
+        "name": "non slip yoga mat",
+        "monthly_search_volume_exact_match": 32000,
+        "monthly_search_volume_broad_match": 75000,
+        "relevancy_score": 88,
+        "organic_rank": 7,
+        "sponsored_rank": 2,
+        "ranking_asins_count": 312
+      }
+    }
+  ],
+  "links": {
+    "self": "https://developer.junglescout.com/api/keywords/keywords_by_asin_query?filter[asin]=B07XJ8C8F5",
+    "next": null
+  },
+  "meta": {
+    "total_items": 2
+  }
+}
