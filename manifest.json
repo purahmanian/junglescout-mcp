@@ -1,0 +1,92 @@
+{
+  "manifest_version": "0.3",
+  "version": "0.1.1",
+  "author": {
+    "name": "Puya Rahmanian",
+    "email": "purahmanian@gmail.com",
+    "url": "https://puyarahmanian.com"
+  },
+  "license": "MIT",
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "name": "junglescout-mcp",
+  "display_name": "Jungle Scout Product Research",
+  "description": "Amazon keyword volumes, product database, sales estimates, and share of voice via Jungle Scout",
+  "long_description": "Gives Claude live access to the Jungle Scout Developer API: exact and broad keyword search volumes with trends and PPC bids, keywords driving any ASIN, product database queries with revenue filters, per-day sales estimates, and brand share of voice. Requires a Jungle Scout plan with API access.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/purahmanian/junglescout-mcp.git"
+  },
+  "homepage": "https://github.com/purahmanian/junglescout-mcp",
+  "support": "https://github.com/purahmanian/junglescout-mcp/issues",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "JUNGLESCOUT_API_KEY": "${user_config.junglescout_api_key}",
+        "JUNGLESCOUT_KEY_NAME": "${user_config.junglescout_key_name}"
+      }
+    }
+  },
+  "user_config": {
+    "junglescout_api_key": {
+      "type": "string",
+      "title": "Jungle Scout API Key",
+      "description": "From the Developer section of your Jungle Scout account",
+      "sensitive": true,
+      "required": true
+    },
+    "junglescout_key_name": {
+      "type": "string",
+      "title": "Jungle Scout Key Name",
+      "description": "The name you gave the API key when generating it",
+      "sensitive": false,
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "keyword_search_volume",
+      "description": "Exact and broad search volume with trends and PPC bids"
+    },
+    {
+      "name": "keywords_by_asin",
+      "description": "Keywords driving traffic to a listing"
+    },
+    {
+      "name": "product_database_query",
+      "description": "Find products by category, keywords, price, revenue, reviews"
+    },
+    {
+      "name": "sales_estimates",
+      "description": "Per-day sales estimates for an ASIN"
+    },
+    {
+      "name": "share_of_voice",
+      "description": "Brand share of organic and sponsored results for a keyword"
+    }
+  ],
+  "keywords": [
+    "amazon",
+    "jungle scout",
+    "keyword research",
+    "product research",
+    "mcp"
+  ],
+  "privacy_policies": [
+    "https://www.junglescout.com/privacy/"
+  ]
+}

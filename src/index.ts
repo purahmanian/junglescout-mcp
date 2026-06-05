@@ -42,7 +42,7 @@ if (!client) {
 
 const server = new McpServer({
   name: "junglescout-mcp",
-  version: "0.1.0",
+  version: "0.1.1",
 });
 
 // ---------------------------------------------------------------------------
@@ -52,6 +52,7 @@ const server = new McpServer({
 server.registerTool(
   "keyword_search_volume",
   {
+    title: "Keyword search volume",
     description:
       "Look up exact-match and broad-match search volume for one or more Amazon keywords. " +
       "Returns 30-day volume, year-over-year trend, quarterly trend, PPC bid estimates, " +
@@ -72,6 +73,7 @@ server.registerTool(
 server.registerTool(
   "keywords_by_asin",
   {
+    title: "Keywords by ASIN",
     description:
       "Discover which keywords drive traffic to a specific Amazon listing (by ASIN). " +
       "Returns keyword name, search volume, organic rank, sponsored rank, and relevancy score. " +
@@ -92,6 +94,7 @@ server.registerTool(
 server.registerTool(
   "product_database_query",
   {
+    title: "Product database query",
     description:
       "Search the Jungle Scout product database for Amazon product opportunities. " +
       "Filter by category, price range, minimum monthly revenue, and maximum review count. " +
@@ -112,6 +115,7 @@ server.registerTool(
 server.registerTool(
   "sales_estimates",
   {
+    title: "Sales estimates",
     description:
       "Get Jungle Scout estimated monthly sales units and revenue for a specific Amazon ASIN. " +
       "Also returns current BSR, price, reviews, and rating to provide context for the estimate.",
@@ -131,6 +135,7 @@ server.registerTool(
 server.registerTool(
   "share_of_voice",
   {
+    title: "Share of voice",
     description:
       "Analyze brand share of voice for a given Amazon search keyword. " +
       "Shows which brands dominate organic and sponsored results, their combined/organic/sponsored " +

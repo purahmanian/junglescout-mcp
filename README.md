@@ -167,6 +167,16 @@ Part of the **Product-Research MCP Suite**:
 
 ---
 
+## Privacy
+
+This server runs entirely on your machine. It collects no telemetry and stores
+no data. The only network calls it makes are to the Jungle Scout API
+(developer.junglescout.com), sending your API credentials and the keywords or
+ASINs you ask about. Credentials are read from the JUNGLESCOUT_API_KEY and
+JUNGLESCOUT_KEY_NAME environment variables and never written to disk or sent
+anywhere except Jungle Scout. See Jungle Scout's privacy policy:
+https://www.junglescout.com/privacy/
+
 ## License
 
 MIT. See [LICENSE](./LICENSE).
