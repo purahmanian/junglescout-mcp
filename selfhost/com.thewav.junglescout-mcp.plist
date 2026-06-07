@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Reference template. selfhost-setup.sh generates the real plist with your
+     absolute node path, repo path, and env values filled in. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.thewav.junglescout-mcp</string>
+  <key>ProgramArguments</key>
+  <array><string>/opt/homebrew/bin/node</string><string>/REPO/dist/http.js</string></array>
+  <key>WorkingDirectory</key><string>/REPO</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PORT</key><string>3000</string>
+    <key>JUNGLESCOUT_API_KEY</key><string>__set_in_env__</string>
+    <key>JUNGLESCOUT_KEY_NAME</key><string>__set_in_env__</string>
+    <key>MCP_AUTH_TOKEN</key><string>__generated__</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/you/Library/Logs/junglescout-mcp/out.log</string>
+  <key>StandardErrorPath</key><string>/Users/you/Library/Logs/junglescout-mcp/err.log</string>
+</dict></plist>
