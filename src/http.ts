@@ -9,14 +9,24 @@ import { createServer } from "./createServer.js";
 const app = express();
 app.use(express.json());
 
-// Simple bearer-token gate. Set MCP_AUTH_TOKEN in the host's env and send
-// `Authorization: Bearer <token>` from the connector config.
+// Simple token gate. Set MCP_AUTH_TOKEN in the host's env. The token may be
+// supplied either via `Authorization: Bearer <token>` OR a `?token=<token>`
+// query param. The query-param path exists because some MCP connector UIs
+// (e.g. Claude's "Add custom connector") accept only a URL and cannot send a
+// custom auth header, so the secret travels in the connector URL instead.
 const AUTH = process.env["MCP_AUTH_TOKEN"];
+
+function isAuthorized(req: express.Request): boolean {
+  if (!AUTH) return true;
+  if (req.headers.authorization === `Bearer ${AUTH}`) return true;
+  if (req.query["token"] === AUTH) return true;
+  return false;
+}
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.post("/mcp", async (req, res) => {
-  if (AUTH && req.headers.authorization !== `Bearer ${AUTH}`) {
+  if (!isAuthorized(req)) {
     return res.status(401).json({
       jsonrpc: "2.0",
       error: { code: -32001, message: "Unauthorized" },
