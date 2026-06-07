@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: junglescout-mcp
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: JUNGLESCOUT_API_KEY
+        sync: false
+      - key: JUNGLESCOUT_KEY_NAME
+        sync: false
+      - key: MCP_AUTH_TOKEN
+        generateValue: true
